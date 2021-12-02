@@ -1,5 +1,6 @@
 class X {
     trendingNewsSection() {
+        $("#sectionName").html("Trending News")
         $("#trendingNews").html("");       
         if (getLocalStorage("trendingNews")) {
             $.each(getLocalStorage("trendingNews"), function (k, v) {
@@ -38,6 +39,7 @@ class X {
         }
     }
     topNewsSection() {
+        $("#sectionName").html("Top News")
         $("#topNews").html("");       
         if (getLocalStorage("topNews")) {
             $.each(getLocalStorage("topNews"), function (k, v) {
@@ -77,6 +79,7 @@ class X {
         }
     }
     eventNewsSection() {
+        $("#sectionName").html("Latest Events")
         $("#eventNews").html("");
         if (getLocalStorage("eventNews")) {
             $.each(getLocalStorage("eventNews"), function (k, v) {
@@ -116,6 +119,7 @@ class X {
         }
     }
     techNewsSection() {
+        $("#sectionName").html("Tech News")
         $("#techNews").html("");       
         if (getLocalStorage("techNews")) {
             $.each(getLocalStorage("techNews"), function (k, v) {
@@ -161,6 +165,7 @@ class X {
 
     }
     entNewsSection() {
+        $("#sectionName").html("Entertainment News")
         $("#entNews").html("");
         if (getLocalStorage("entNews")) {
             $.each(getLocalStorage("entNews"), function (k, v) {
@@ -206,6 +211,7 @@ class X {
 
     }
     businessNewsSection() {
+        $("#sectionName").html("Business News")
         $("#businessNews").html("");
         if (getLocalStorage("businessNews")) {
             $.each(getLocalStorage("businessNews"), function (k, v) {
@@ -270,6 +276,7 @@ class X {
 
     }   
     wikiSection() {
+        $("#sectionName").html("Trending Articles")
         $("#wikiArticles").html(""); 
         if (getLocalStorage("wiki")) {
             $.each(getLocalStorage("wiki").mostread, function (k, v) {
@@ -288,7 +295,7 @@ class X {
                             <p class="mb-0 mt-1 small"><a href="${v.link}" target="_blank">Read full article on Wikipedia</a></p>   
                             </details>                                                        
                         </div>
-                        <img src="${imgsrc}" alt="" width="64" height="64" class="flex-shrink-0 sqimg mt-4 rounded">
+                        <img src="${imgsrc}" alt="" width="64" height="64" class="flex-shrink-0 sqimg mt-0 rounded">
                     </div>	
                    
                 </li>
@@ -302,17 +309,19 @@ class X {
         }
     }
     risingNewsSection(){
+        $("#sectionName").html("Rising News")
         $("body").css({"opacity": "0.2"});     
         $("body").css({"cursor": "wait"});
         getTimeline();
     }
-    homeSection() {}
+    homeSection() {$("#sectionName").html("Home")}
     newsSection(){}
-    countryNewsSection() {}
-    languageNewsSection() {}
-    searchNewsSection(){}
+    countryNewsSection() {$("#sectionName").html("Country News")}
+    languageNewsSection() {$("#sectionName").html("Language News")}
+    searchNewsSection(){$("#sectionName").html("Search News")}
 }
-
+countryVal = "IN";
+languageVal = "ENG";
 window.addEventListener('hashchange', function () {
     try{
         $("#offcanvasMenu").offcanvas('hide');
@@ -568,6 +577,10 @@ function getBusinessNews() {
         $("body").css({"cursor": ""});
     })
 }
+$("#button-countryNews").on("click", function(){
+    $("body").css({ "opacity": "0.2" });
+    getCountryNews(countryVal);
+})
 function getCountryNews(hash) {
     urls = ["https://api.gdeltproject.org/api/v2/doc/doc?query=sourcecountry:" + hash + "%20sourcelang:eng&mode=artlist&format=json&maxrecords=75&sort=datedesc",
     ]
@@ -634,8 +647,13 @@ function getCountryNews(hash) {
         });        
         $("body").css({ "opacity": "1" });
         $("body").css({"cursor": ""});
+        $("#countryNews").focus();
     })
 }
+$("#button-languageNews").on("click", function(){
+    $("body").css({ "opacity": "0.2" });
+    getLanguageNews(languageVal);
+})
 function getLanguageNews(hash) {
     urls = ["https://api.gdeltproject.org/api/v2/doc/doc?query=sourcelang:" + hash + "&mode=artlist&format=json&maxrecords=75&sort=datedesc",
     ]
@@ -705,9 +723,85 @@ function getLanguageNews(hash) {
         $("body").css({"cursor": ""});
     })
 }
+$("#button-keyword").on("click", function(){    
+    $("body").css({ "opacity": "0.2" });    
+    getKeywordNews($("#keyword").val());
+})
+function getKeywordNews(hash) {
+    urls = ["https://api.gdeltproject.org/api/v2/doc/doc?query=" + $.trim(hash) + "%20sourcelang:eng&mode=artlist&format=json&maxrecords=75&sort=datedesc"]
+    async.mapLimit(urls, 1, async function (url) {
+        try {
+            const response = await fetch(url)
+            return response.json()
+        } catch (err) {
+            // console.trace(err);
+        }
+
+    }, (err, results) => {
+        // if (err) { console.log(err); }
+        arr = []
+        // console.log(results);
+        for (index in results) {
+            results[index].articles.forEach(item => {
+                var item_index = arr.findIndex(x => x.link == item.url);
+                if (item_index === -1) {
+                    arr.push({ "title": item.title, "created": item.seendate, "link": item.url, "source": item.domain, "thumbnail": item.socialimage })
+                }
+            });
+        }
+        arrr = arr.sort(function (a, b) {
+            return b.created - a.created;
+        });
+        // console.log(arrr);
+        $("#searchNews").html(``);
+        $.each(arrr, function (k, v) {
+            var mDate = v.created.slice(0, 4) + "-" + v.created.slice(4, 6) + "-" + v.created.slice(6, 8)
+                + " " + v.created.slice(9, 11) + ":" + v.created.slice(11, 13)
+                + ":" + v.created.slice(13, 15);
+            var unixtime = Date.parse(mDate);
+            var currTime = Date.now();
+            var timediff = Math.round(currTime / 1000 - unixtime / 1000);
+            if (timediff / 60 / 60 < 1) {
+                timediff = Math.round(timediff / 60) + " minutes ago";
+            } else if (Math.round(timediff / 60 / 60) === 1) {
+                timediff = Math.round(timediff / 60 / 60) + " hour ago";
+            } else {
+                timediff = Math.round(timediff / 60 / 60) + " hours ago";
+            }
+            try {
+                var { hostname } = new URL(v.link);
+                let imgsrc = v.thumbnail ? v.thumbnail : ``
+                var $listItem = $(`                    
+        <li class="list-group-item border-bottom py-4 bg-light mb-1" style="cursor:pointer">                                        
+            <div class="d-flex gap-2 w-100 justify-content-between">
+                <div>
+                    <img src="https://www.google.com/s2/favicons?sz=16&domain=${hostname}" alt="" width="16" height="16" class="rounded-circle flex-shrink-0">                                
+                    <h5 class="mb-0 mt-0 fw-bold">${v.title}</h5> 
+                    <p class="mb-0 mt-1 opacity-50 small">${hostname}, ${timediff}</p>                                                             
+                </div>
+                <img src="${imgsrc}" alt="" width="64" height="64" class="flex-shrink-0 sqimg mt-2 rounded">
+            </div>	
+           
+        </li>
+        `);
+                $listItem.on("click", function (e) {
+                    window.open(v.link, '_blank');
+                });
+                $("#searchNews").append($listItem);
+            } catch (err) {
+                // console.log(v.link, err);
+            }
+        });
+        // p();
+        $("body").css({ "opacity": "1" });
+        $("body").css({ "cursor": "" });
+
+    })
+}
 function getTimeline() {
-    urls = ["https://api.gdeltproject.org/api/v2/doc/doc?timespan=3h&query=sourcelang:eng&mode=TimelineVolInfo&sort=hybridrel&format=json",
-    ]
+    urls = ["https://api.gdeltproject.org/api/v2/doc/doc?timespan=1h&query=sourcelang:eng%20(domain:bbc.com%20OR%20domain:cnn.com%20OR%20domain:economictimes.indiatimes.com%20OR%20domain:theguardian.com)&mode=TimelineVolInfo&sort=hybridrel&format=json",
+            "https://api.gdeltproject.org/api/v2/doc/doc?timespan=3h&query=sourcelang:eng%20(domain:news18.com%20OR%20domain:theprint.in%20OR%20domain:livemint.com%20OR%20domain:thehindu.com)&mode=TimelineVolInfo&sort=hybridrel&format=json"
+           ]   
     async.mapLimit(urls, 1, async function (url) {
         try {
             const response = await fetch(url)
@@ -721,37 +815,33 @@ function getTimeline() {
         arr = []        
         for (index in results) {
             results[index].timeline[0].data.forEach(item => {
-                arr.push({"created": item.date, "articles": item.toparts})
+                arr.push({"created": item.date.replace("T","").replace("Z",""), "articles": item.toparts})
             });
-        }             
+        }
+        arrr = arr.sort(function (a, b) {
+            return b.created - a.created;
+        });              
         $("#risingNews").html(``);
-        $.each(arr, function (k, v) {
-            var ihtml = `<ul class="list-group list-group-flush mt-4">`;            
+        $.each(arrr, function (k, v) {                       
             $.each(v.articles,function(k,v){    
-                var { hostname } = new URL(v.url);            
-                ihtml += ` <li class="list-group-item border-bottom py-1 bg-light mb-1"><h5 class="mb-0 mt-0 fw-bold">${v.title}</h5><a href="${v.url}" target="_blank" class="small fw-bold text-muted">${hostname.replace("www.","")}</a></p>`
-            }) 
-            ihtml += ` </ul>`         
-            try {  
-                var mDate = v.created.slice(0, 4) + "-" + v.created.slice(4, 6) + "-" + v.created.slice(6, 8)
-                + " " + v.created.slice(9, 11) + ":" + v.created.slice(11, 13)
-                + ":" + v.created.slice(13, 15);
-                var unixtime = new Date(mDate);
-                const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour:'numeric', minute:'numeric', seconds:'numeric' };
-                var $listItem = $(`                    
-                <li class="list-group-item border-bottom py-4 bg-light mb-1">
-                    <div>
-                    <details><summary>
-                        <h5 class="mb-0 mt-0 d-inline-block align-text-top">${unixtime.toLocaleDateString('en-IN', options)}</h5></summary>                    
-                        ${ihtml}   
-                        </details>                                          
-                    </div>      
-                </li>
-                `);               
+                var { hostname } = new URL(v.url);
+                var $listItem = $(`
+                <li class="list-group-item border-bottom py-4 bg-light mb-1" style="cursor:pointer">
+                    <div class="d-flex gap-2 w-100 justify-content-between">
+                        <div>        
+                            <h5 class="mb-0 mt-0 fw-bold">${v.title}</h5>
+                            <p class="mb-0 mt-1 opacity-75 small">${hostname}</p>
+                        </div>
+                        <img src="https://www.google.com/s2/favicons?sz=32&domain=${hostname}" alt="" width="32" height="32" class="rounded-circle flex-shrink-0 mb-1">
+                    </div>  
+                                                                                                         
+                </li>                               
+                `);
+                $listItem.on("click", function (e) {
+                    window.open(v.url, '_blank');                   
+                });
                 $("#risingNews").append($listItem);
-            } catch (err) {
-                // console.log(v.link, err);
-            }
+            })
         });
         
         $("body").css({ "opacity": "1" });
@@ -819,9 +909,8 @@ function autocomplete() {
         var current = $inputC.typeahead("getActive");
         if (current) {          
           if (current.toUpperCase() == $inputC.val().toUpperCase()) {
-            var value = current.slice(-2);            
-            $("body").css({ "opacity": "0.2" });
-            getCountryNews(value);
+            countryVal = current.slice(-2);
+            // getCountryNews(value);
           } 
         } 
       }));  
@@ -834,88 +923,88 @@ function autocomplete() {
           var current = $input.typeahead("getActive");
           if (current) {            
             if (current.toUpperCase() == $input.val().toUpperCase()) {
-              var value = current.slice(-3);              
-              $("body").css({ "opacity": "0.2" });
-              getLanguageNews(value);            
+              languageVal = current.slice(-3);              
+            //   $("body").css({ "opacity": "0.2" });
+            //   getLanguageNews(value);            
             } 
           } 
         })); 
 }
 
 
-document.getElementById("keyword").addEventListener("keyup", searchNewsByKeyword);
-function searchNewsByKeyword() {  
-    var x = document.getElementById("keyword");   
-    if(x.value.length>=5){
-        urls = ["https://api.gdeltproject.org/api/v2/doc/doc?query=" + x.value + "%20sourcelang:eng&mode=artlist&format=json&maxrecords=75&sort=datedesc",
-    ]
-    async.mapLimit(urls, 1, async function (url) {
-        try {
-            const response = await fetch(url)
-            return response.json()
-        } catch (err) {
-            // console.trace(err);
-        }
+// document.getElementById("keyword").addEventListener("keyup", searchNewsByKeyword);
+// function searchNewsByKeyword() {  
+//     var x = document.getElementById("keyword");
+//     if (x.value.length >= 5) {
+//         urls = ["https://api.gdeltproject.org/api/v2/doc/doc?query=" + x.value + "%20sourcelang:eng&mode=artlist&format=json&maxrecords=75&sort=datedesc",
+//         ]
+//         async.mapLimit(urls, 1, async function (url) {
+//             try {
+//                 const response = await fetch(url)
+//                 return response.json()
+//             } catch (err) {
+//                 // console.trace(err);
+//             }
 
-    }, (err, results) => {
-        // if (err) { console.log(err); }
-        arr = []
-        // console.log(results);
-        for (index in results) {
-            results[index].articles.forEach(item => {
-                var item_index = arr.findIndex(x => x.link == item.url);
-                if (item_index === -1) {
-                    arr.push({ "title": item.title, "created": item.seendate, "link": item.url, "source": item.domain, "thumbnail": item.socialimage })
-                }
-            });
-        }
-        arrr = arr.sort(function (a, b) {
-            return b.created - a.created;
-        });
-        $("#searchNews").html(``);
-        $.each(arrr, function (k, v) {
-            var mDate = v.created.slice(0, 4) + "-" + v.created.slice(4, 6) + "-" + v.created.slice(6, 8)
-                + " " + v.created.slice(9, 11) + ":" + v.created.slice(11, 13)
-                + ":" + v.created.slice(13, 15);
-            var unixtime = Date.parse(mDate);
-            var currTime = Date.now();
-            var timediff = Math.round(currTime / 1000 - unixtime / 1000);
-            if (timediff / 60 / 60 < 1) {
-                timediff = Math.round(timediff / 60) + " minutes ago";
-            } else if (Math.round(timediff / 60 / 60) === 1) {
-                timediff = Math.round(timediff / 60 / 60) + " hour ago";
-            } else {
-                timediff = Math.round(timediff / 60 / 60) + " hours ago";
-            }
-            try {
-                var { hostname } = new URL(v.link);
-                let imgsrc = v.thumbnail ? v.thumbnail : ``
-                var $listItem = $(`                    
-            <li class="list-group-item border-bottom py-4 bg-light mb-1" style="cursor:pointer">                                        
-                <div class="d-flex gap-2 w-100 justify-content-between">
-                    <div>
-                        <img src="https://www.google.com/s2/favicons?sz=16&domain=${hostname}" alt="" width="16" height="16" class="rounded-circle flex-shrink-0">                                
-                        <h5 class="mb-0 mt-0 fw-bold">${v.title}</h5> 
-                        <p class="mb-0 mt-1 opacity-50 small">${hostname}, ${timediff}</p>                                                             
-                    </div>
-                    <img src="${imgsrc}" alt="" width="64" height="64" class="flex-shrink-0 sqimg mt-2 rounded">
-                </div>	
+//         }, (err, results) => {
+//             // if (err) { console.log(err); }
+//             arr = []
+//             // console.log(results);
+//             for (index in results) {
+//                 results[index].articles.forEach(item => {
+//                     var item_index = arr.findIndex(x => x.link == item.url);
+//                     if (item_index === -1) {
+//                         arr.push({ "title": item.title, "created": item.seendate, "link": item.url, "source": item.domain, "thumbnail": item.socialimage })
+//                     }
+//                 });
+//             }
+//             arrr = arr.sort(function (a, b) {
+//                 return b.created - a.created;
+//             });
+//             $("#searchNews").html(``);
+//             $.each(arrr, function (k, v) {
+//                 var mDate = v.created.slice(0, 4) + "-" + v.created.slice(4, 6) + "-" + v.created.slice(6, 8)
+//                     + " " + v.created.slice(9, 11) + ":" + v.created.slice(11, 13)
+//                     + ":" + v.created.slice(13, 15);
+//                 var unixtime = Date.parse(mDate);
+//                 var currTime = Date.now();
+//                 var timediff = Math.round(currTime / 1000 - unixtime / 1000);
+//                 if (timediff / 60 / 60 < 1) {
+//                     timediff = Math.round(timediff / 60) + " minutes ago";
+//                 } else if (Math.round(timediff / 60 / 60) === 1) {
+//                     timediff = Math.round(timediff / 60 / 60) + " hour ago";
+//                 } else {
+//                     timediff = Math.round(timediff / 60 / 60) + " hours ago";
+//                 }
+//                 try {
+//                     var { hostname } = new URL(v.link);
+//                     let imgsrc = v.thumbnail ? v.thumbnail : ``
+//                     var $listItem = $(`                    
+//             <li class="list-group-item border-bottom py-4 bg-light mb-1" style="cursor:pointer">                                        
+//                 <div class="d-flex gap-2 w-100 justify-content-between">
+//                     <div>
+//                         <img src="https://www.google.com/s2/favicons?sz=16&domain=${hostname}" alt="" width="16" height="16" class="rounded-circle flex-shrink-0">                                
+//                         <h5 class="mb-0 mt-0 fw-bold">${v.title}</h5> 
+//                         <p class="mb-0 mt-1 opacity-50 small">${hostname}, ${timediff}</p>                                                             
+//                     </div>
+//                     <img src="${imgsrc}" alt="" width="64" height="64" class="flex-shrink-0 sqimg mt-2 rounded">
+//                 </div>	
                
-            </li>
-            `);
-                $listItem.on("click", function (e) {
-                    window.open(v.link, '_blank');
-                });
-                $("#searchNews").append($listItem);
-            } catch (err) {
-                // console.log(v.link, err);
-            }
-        });
-        p();
-        $("body").css({"opacity": "1"});
-        $("body").css({"cursor": ""});
-     
-    })
-    }
+//             </li>
+//             `);
+//                     $listItem.on("click", function (e) {
+//                         window.open(v.link, '_blank');
+//                     });
+//                     $("#searchNews").append($listItem);
+//                 } catch (err) {
+//                     // console.log(v.link, err);
+//                 }
+//             });
+//             p();
+//             $("body").css({ "opacity": "1" });
+//             $("body").css({ "cursor": "" });
+
+//         })
+//     }
     
-}
+// }
